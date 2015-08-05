@@ -823,9 +823,13 @@ EOD
       if machine_spec.reference[:sudo] || (!machine_spec.reference.has_key?(:sudo) && username != 'root')
         options[:prefix] = 'sudo '
       end
+      
+      remote_host = nil
 
-      remote_host = determine_remote_host(machine_spec, instance)
-
+      Retryable.retryable(:tries => 12, :sleep => 5, :on => [AWS::EC2::Errors::RequestLimitExceeded]) do
+        remote_host = determine_remote_host(machine_spec, instance)
+      end
+      
       #Enable pty by default
       options[:ssh_pty_enable] = true
       options[:ssh_gateway] = machine_spec.reference['ssh_gateway'] if machine_spec.reference.has_key?('ssh_gateway')
